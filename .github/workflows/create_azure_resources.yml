@@ -1,4 +1,4 @@
-name: Build and deploy .NET Core Function App to Azure functions app
+name: Create Azure resources for an Azure function app
 on:
   push:
     branches:
@@ -11,10 +11,39 @@ env:
   WORKING_DIRECTORY: Ddc.PublicAffairs.Applications.KennanAzureFunction
 jobs:
   create-azure-resources:
-    runs-on: windows-latest
-    name: Create resources for Azure function app
+    runs-on: ubuntu-latest
+    name: Create resources for an Azure function app
     steps:
-    - shell: bash
-      run: |
-        echo $DOTNET_CORE_VERSION
+    - name: checkout latest from master
+      uses: actions/checkout@master
+    # - name:  log in to azure mcg
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{ secrets.AZURE_CREDENTIALS_SANDBOX }}
+    #     enable-AzPSSession: true
+    - uses: Azure/CLI@v1
+      with:
+        inlineScript: |
+          echo "Hello there!"
+          let "randomIdentifier=$RANDOM*$RANDOM"
+          location=eastus
+          resourceGroup="rg-yttest-$randomIdentifier"
+          tag="create-resources-using-cli"
+          storage="storage$randomIdentifier"
+          skuStorage="Standard_LRS"
+          functionApp=yttestfunc$randomIdentifier
+          functionsVersion="4"
+          runtime="dotnet"
+          gitrepo=https://github.com/ytsaiddc/poc-function-app2
+
+          echo "Creating $resourceGroup in ""$location""..."
+          az group create --name $resourceGroup --location "$location" --tags $tag
+
+          echo "Creating $storage"
+          az storage account create --name $storage --location "$location" --resource-group $resourceGroup --sku $skuStorage
+
+          echo "Creating $functionApp"
+          az functionapp create --name $functionApp --storage-account $storage --consumption-plan-location "$location" --resource-group $resourceGroup --deployment-source-url $gitrepo --deployment-source-branch main --functions-version $functionsVersion --runtime $runtime
+
+          echo "Done!"
     
