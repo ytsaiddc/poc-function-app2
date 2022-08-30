@@ -12,7 +12,9 @@ env:
 jobs:
   create-azure-resources:
     runs-on: windows-latest
+    name: Create resources for Azure function app
     steps:
     - shell: bash
       run: |
         echo $DOTNET_CORE_VERSION
+    
